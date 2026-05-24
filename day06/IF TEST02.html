@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button type="button" onclick="getvalue();">값출력</button>
+    <p id="numbers"></p>
+
+    <script>
+        function getvalue() {
+            const randval = Math.floor (Math.random() * 100) + 1;
+            const ptag = document.querySelector ('#numbers');
+            ptag.textContent = `${randval} 점`;
+
+            if(randval >= 90) {
+                alert ('점수:' + randval + ", 학점 : A");
+            }else if(randval >= 80) {
+                alert(`점수 : ${randval}, 학점 : B`);
+            }else if(randval >= 70) {
+                alert(`점수 : ${randval}, 학점 : C`);
+            }else if(randval >= 60) {
+                alert(`점수 : ${randval}, 학점 : D`);
+            }else{
+                alert(`점수 : ${randval}, 학점 : F`);
+            }
+        }
+    </script>
+</body>
+</html>

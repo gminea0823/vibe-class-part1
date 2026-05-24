@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button type="button" onclick="getvalue();">값출력</button>
+    <p id="numbers"></p>
+
+    <script>
+        function getvalue() {
+         const randval = Math.floor (Math.random() * 20) + 1;
+            const ptag = document.querySelector ('#numbers');
+
+            if(randval >= 18) {
+                alert (`나이:' ${randval}, 성인`);
+            }else if(randval >= 13) {
+                alert(`나이 : ${randval}, 청소년`);    
+            }else {
+                alert(`나이 : ${randval}, 어린이`); 
+            } 
+        }      
+    </script>
+</body>
+</html>ㄴ
