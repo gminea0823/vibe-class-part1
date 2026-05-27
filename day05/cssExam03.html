@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        
+        div{
+            border: 1px solid black
+        }
+        .outline{
+            width: 100px;
+            height: 100px;
+        }
+
+        .child{
+            /*vw,vh기준은 (브라우저 화면)부모가 있더라도 내가 쓸 수 있는 화면을 기준으로 커짐
+            반응혀 웹에서 많이 사용된다 내가 커졌다 줄였따 했을 때 기준으로 줄어들고 커지기때문에 */
+            width: 50vw;
+            height: 100vh;
+        }
+
+    </style>
+</body>
+     <div class="outline">
+        <div class="child">자식</div>
+    </div>
+    <div class="child">외부</div>
+</body>
+</html>

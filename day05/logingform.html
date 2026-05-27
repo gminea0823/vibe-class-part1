@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+ <style>
+
+        body{
+            padding:0;
+            margin: 0;
+    
+        }
+        .caontainer{
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .login-form{
+            width: 400px;
+            height: 350px;
+            border:1px solid black;
+            border-radius: 10px;
+            background-color: rgb(70, 70, 70);
+            
+        }
+
+        .form{
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title{
+            text-align: center;
+            color: white;
+        }
+
+        .loginbtn{
+            width: 100%;
+            background-color: #59f7c7;
+            border-radius: 10px;
+            color:black;
+            gap: 20px;
+        }
+     </style>
+<body>
+    <div class="caontainer">
+        <div class="login-form">
+            <div class="form">
+                <from>
+                    <span class="title"><h2>로그인</h2></span>
+                    <div>
+                        <input type="text" id="userid" placeholder="ID 입력">
+                    </div>
+                    <div>
+                        <input type="password" id="password" placeholder="password 입력">
+                    </div>
+                    <div>
+                        <button type="button" class="loginbtn" onclick="login()">로그인</button>
+                    </div>
+                </from>
+            </div>
+        </div>
+    </div>
+    <script>
+        function login() {
+            const userid = document.getElementById('userid');
+            const passwd = document.getElementById('password');
+
+            if(userid.value.trim().length === 0) {
+                alert('아이디를 입력하십시오');
+                //함수끝내기
+                return;
+            }
+
+            if(passwd.value.trim().length === 0) {
+                alert('패스워드를 입력하십시오');
+                //함수끝내기
+                return;
+            }         
+            alert('로그인 되었습니다.'); 
+        }
+
+    </script>
+</body>
+</html>
