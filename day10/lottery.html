@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍀 로또 번호 생성기</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #22263a;
+      --border:    #2e3350;
+      --text:      #e2e6f0;
+      --muted:     #6b7280;
+      --blue:      #4f8ef7;
+      --purple:    #a855f7;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --gray-ball: #4b5563;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 14px 60px;
+    }
+
+    .container { width: 100%; max-width: 540px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── 헤더 ── */
+    .header {
+      background: linear-gradient(135deg, #1e2a4a, #2a1e4a);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; }
+    .header h1 span { color: var(--green); }
+    .game-ctrl { display: flex; align-items: center; gap: 8px; }
+    .game-ctrl label { font-size: .78rem; color: var(--muted); }
+    .gc-btn {
+      width: 26px; height: 26px; border: 1px solid var(--border);
+      border-radius: 50%; background: var(--surface2); color: var(--text);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .gc-btn:hover { background: var(--border); }
+    .gc-num { font-weight: 700; min-width: 18px; text-align: center; font-size: 1rem; }
+
+    /* ── 탭 ── */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 5px;
+      gap: 4px;
+    }
+    .tab-btn {
+      padding: 10px 6px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .tab-btn.active {
+      background: var(--surface2);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    .tab-btn.active.auto   { color: var(--green); }
+    .tab-btn.active.semi   { color: var(--blue); }
+    .tab-btn.active.manual { color: var(--yellow); }
+
+    /* ── 추천 번호 생성 버튼 (중앙) ── */
+    .reco-generate-wrap {
+      display: flex;
+      justify-content: center;
+    }
+    .btn-reco-gen {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border: none;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(168,85,247,.35);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-reco-gen:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(168,85,247,.5); }
+    .btn-reco-gen:active { transform: scale(.97); }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .card-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+
+    /* ── 번호판 ── */
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+    }
+    .num-btn {
+      aspect-ratio: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .1s, background .12s, border-color .12s;
+    }
+    .num-btn:hover { transform: scale(1.1); border-color: var(--blue); }
+    .num-btn.selected  { background: var(--blue);   border-color: var(--blue);   color: #fff; }
+    .num-btn.from-reco { background: var(--purple);  border-color: var(--purple); color: #fff; }
+    .num-btn.excluded  { background: #2a1515; border-color: #5a2020; color: var(--red); text-decoration: line-through; opacity: .6; }
+
+    /* ── 추천 칩 ── */
+    .reco-chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+    .reco-chip {
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1.5px solid var(--purple);
+      background: transparent;
+      color: var(--purple);
+      font-weight: 700; font-size: .8rem;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .reco-chip:hover { background: var(--purple); color: #fff; }
+    .reco-chip.added { background: var(--purple); color: #fff; opacity: .5; cursor: default; }
+
+    /* ── 제외 칩 ── */
+    .excl-chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .excl-chip {
+      padding: 3px 9px; border-radius: 20px;
+      background: #2a1515; color: var(--red);
+      font-weight: 700; font-size: .78rem;
+      cursor: pointer; border: 1px solid #5a2020;
+      transition: opacity .15s;
+    }
+    .excl-chip:hover { opacity: .7; }
+
+    /* ── 미리보기 ── */
+    .preview-balls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .preview-ball {
+      width: 46px; height: 46px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .9rem; color: #fff;
+      transition: background .2s;
+    }
+    .preview-ball.blue   { background: var(--blue); }
+    .preview-ball.purple { background: var(--purple); }
+    .preview-ball.empty  { background: var(--surface2); border: 2px dashed var(--border); color: transparent; }
+    .preview-count { text-align: center; margin-top: 8px; font-size: .78rem; color: var(--muted); }
+
+    /* ── 하단 버튼 ── */
+    .btn-row { display: flex; gap: 10px; }
+    .btn {
+      flex: 1; padding: 14px; border: none; border-radius: 12px;
+      font-size: .95rem; font-weight: 700; cursor: pointer;
+      transition: transform .1s, box-shadow .15s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #4f8ef7);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(79,142,247,.3);
+    }
+    .btn-primary:hover { box-shadow: 0 5px 18px rgba(79,142,247,.5); }
+    .btn-primary.green {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      box-shadow: 0 3px 12px rgba(34,197,94,.3);
+    }
+    .btn-primary.green:hover { box-shadow: 0 5px 18px rgba(34,197,94,.5); }
+    .btn-reset { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+    .btn-reset:hover { color: var(--text); }
+
+    /* ── 결과 ── */
+    .result-section { display: flex; flex-direction: column; gap: 8px; }
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: fadeUp .3s ease;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .result-label { font-size: .75rem; font-weight: 700; color: var(--muted); min-width: 38px; }
+    .result-balls { display: flex; gap: 7px; flex-wrap: wrap; }
+    .result-ball {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .82rem; color: #fff;
+    }
+    .rb-blue   { background: var(--blue); }
+    .rb-purple { background: var(--purple); }
+    .rb-gray   { background: var(--gray-ball); }
+    .rb-green  { background: var(--green); }
+
+    /* ── 탭 패널 ── */
+    .tab-panel { display: none; flex-direction: column; gap: 12px; }
+    .tab-panel.active { display: flex; }
+
+    /* ── 자동탭 안내 ── */
+    .auto-info {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .auto-info strong { color: var(--green); }
+
+    /* ── 수동탭 안내 ── */
+    .manual-hint {
+      font-size: .75rem; color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    /* ── 토스트 ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: #2e3350; color: var(--text);
+      padding: 10px 22px; border-radius: 30px;
+      font-size: .85rem; font-weight: 600;
+      opacity: 0; transition: opacity .3s, transform .3s;
+      z-index: 999; white-space: nowrap;
+      border: 1px solid var(--border);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── 구분선 ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <h1>🍀 <span>로또</span> 번호 생성기</h1>
+    <div class="game-ctrl">
+      <label>게임 수</label>
+      <button class="gc-btn" id="btnMinus">−</button>
+      <span class="gc-num" id="gameCountDisplay">5</span>
+      <button class="gc-btn" id="btnPlus">+</button>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab-btn auto active" data-tab="auto">🎲 자동</button>
+    <button class="tab-btn semi" data-tab="semi">⚡ 반자동</button>
+    <button class="tab-btn manual" data-tab="manual">✏️ 수동</button>
+  </div>
+
+  <!-- ─── 자동 탭 ─── -->
+  <div class="tab-panel active" id="panel-auto">
+    <div class="auto-info">
+      <strong>자동 모드</strong> — 1~45 중 완전 랜덤으로 6개를 뽑습니다.<br>
+      아래 <strong>추천 번호 생성</strong> 버튼을 눌러 통계 기반 추천 번호를 먼저 확인할 수도 있어요.
+    </div>
+
+    <!-- 추천 번호 생성 (중앙) -->
+    <div class="reco-generate-wrap">
+      <button class="btn-reco-gen" id="btnRecoGen">✨ 추천 번호 생성</button>
+    </div>
+
+    <!-- 추천 번호 표시 -->
+    <div class="card" id="recoDisplay" style="display:none">
+      <div class="card-title">★ 추천 번호 (클릭하면 반자동으로 이동)</div>
+      <div class="reco-chips-wrap" id="recoChips"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary green" id="btnAutoGen">🎰 자동 번호 뽑기</button>
+      <button class="btn btn-reset" id="btnAutoClear">🗑 초기화</button>
+    </div>
+  </div>
+
+  <!-- ─── 반자동 탭 ─── -->
+  <div class="tab-panel" id="panel-semi">
+    <div class="card">
+      <div class="card-title">번호판 — 고정할 번호 클릭 · 우클릭: 제외</div>
+      <div class="number-grid" id="numberGridSemi"></div>
+    </div>
+
+    <!-- 추천 번호 생성 (중앙) -->
+    <div class="reco-generate-wrap">
+      <button class="btn-reco-gen" id="btnRecoGenSemi">✨ 추천 번호 생성</button>
+    </div>
+
+    <div class="card" id="recoCardSemi">
+      <div class="card-title">★ 추천 (클릭 → 고정 추가)</div>
+      <div class="reco-chips-wrap" id="recoRowSemi"></div>
+      <hr class="divider" style="margin:10px 0">
+      <div class="excl-chips-wrap" id="exclRowSemi">
+        <span style="font-size:.78rem;color:var(--muted)">🚫 제외 없음 (우클릭으로 추가)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">고정 번호 미리보기</div>
+      <div class="preview-balls" id="previewBallsSemi"></div>
+      <div class="preview-count" id="previewCountSemi">0 / 6</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnSemiGen">🎰 번호 뽑기</button>
+      <button class="btn btn-reset" id="btnSemiClear">🗑 초기화</button>
+    </div>
+  </div>
+
+  <!-- ─── 수동 탭 ─── -->
+  <div class="tab-panel" id="panel-manual">
+    <div class="card">
+      <div class="manual-hint">클릭으로 6개를 직접 선택하세요</div>
+      <div class="number-grid" id="numberGridManual"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">선택 미리보기</div>
+      <div class="preview-balls" id="previewBallsManual"></div>
+      <div class="preview-count" id="previewCountManual">0 / 6</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" style="background:linear-gradient(135deg,#b45309,#f59e0b);box-shadow:0 3px 12px rgba(245,158,11,.3)" id="btnManualSave">💾 번호 저장</button>
+      <button class="btn btn-reset" id="btnManualClear">🗑 초기화</button>
+    </div>
+  </div>
+
+  <!-- 결과 공통 -->
+  <div class="result-section" id="resultSection"></div>
+
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ────────────── 상수 ──────────────
+  const RECOMMENDED = [27, 43, 34, 7, 11, 17, 40, 2, 45, 23, 9, 36, 14, 30, 22];
+
+  // ────────────── 상태 ──────────────
+  const semi = {
+    selected: new Set(),
+    excluded: new Set(),
+    fromReco: new Set(),
+  };
+  const manual = {
+    selected: new Set(),
+  };
+  let gameCount = 5;
+  let currentTab = 'auto';
+  let recoVisible = { auto: false, semi: false };
+
+  // ────────────── 유틸 ──────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function randomPick(pool, n) { return shuffle(pool).slice(0, n); }
+
+  function getSemiPool() {
+    const pool = [];
+    for (let i = 1; i <= 45; i++) {
+      if (!semi.excluded.has(i) && !semi.selected.has(i)) pool.push(i);
+    }
+    return pool;
+  }
+
+  function makeBall(num, cls) {
+    const d = document.createElement('div');
+    d.className = `result-ball ${cls}`;
+    d.textContent = num;
+    return d;
+  }
+
+  // ────────────── 탭 전환 ──────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(`panel-${currentTab}`).classList.add('active');
+    });
+  });
+
+  // ────────────── 게임 수 ──────────────
+  document.getElementById('btnMinus').addEventListener('click', () => {
+    if (gameCount > 1) { gameCount--; document.getElementById('gameCountDisplay').textContent = gameCount; }
+  });
+  document.getElementById('btnPlus').addEventListener('click', () => {
+    if (gameCount < 10) { gameCount++; document.getElementById('gameCountDisplay').textContent = gameCount; }
+  });
+
+  // ────────────── 결과 렌더 ──────────────
+  function renderResults(results, colorFn) {
+    const section = document.getElementById('resultSection');
+    section.innerHTML = '';
+    const labels = 'ABCDEFGHIJ';
+    results.forEach((set, idx) => {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      const lbl = document.createElement('div');
+      lbl.className = 'result-label';
+      lbl.textContent = labels[idx] + '게임';
+      const balls = document.createElement('div');
+      balls.className = 'result-balls';
+      set.forEach(n => balls.appendChild(makeBall(n, colorFn(n))));
+      card.appendChild(lbl);
+      card.appendChild(balls);
+      section.appendChild(card);
+    });
+  }
+
+  // ════════════ 자동 탭 ════════════
+  function generateAuto() {
+    const pool = [];
+    for (let i = 1; i <= 45; i++) pool.push(i);
+    const results = [];
+    const used = new Set();
+    let tries = 0;
+    while (results.length < gameCount && tries < gameCount * 100) {
+      tries++;
+      const set = randomPick(pool, 6).sort((a, b) => a - b);
+      const key = set.join(',');
+      if (!used.has(key)) { used.add(key); results.push(set); }
+    }
+    renderResults(results, () => 'rb-green');
+  }
+
+  // 추천 번호 생성 (자동 탭)
+  document.getElementById('btnRecoGen').addEventListener('click', () => {
+    const picked = shuffle(RECOMMENDED).slice(0, 6).sort((a, b) => a - b);
+    const wrap = document.getElementById('recoChips');
+    wrap.innerHTML = '';
+    picked.forEach(n => {
+      const chip = document.createElement('button');
+      chip.className = 'reco-chip';
+      chip.textContent = n;
+      chip.addEventListener('click', () => {
+        // 반자동 탭으로 이동하고 추가
+        if (semi.selected.size < 6 && !semi.excluded.has(n)) {
+          semi.selected.add(n);
+          semi.fromReco.add(n);
+        }
+        // 탭 전환
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.tab-btn.semi').classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-semi').classList.add('active');
+        currentTab = 'semi';
+        renderSemi();
+        showToast(`${n}번을 반자동 고정에 추가했어요.`);
+      });
+      wrap.appendChild(chip);
+    });
+    document.getElementById('recoDisplay').style.display = '';
+  });
+
+  document.getElementById('btnAutoGen').addEventListener('click', generateAuto);
+  document.getElementById('btnAutoClear').addEventListener('click', () => {
+    document.getElementById('resultSection').innerHTML = '';
+    document.getElementById('recoDisplay').style.display = 'none';
+  });
+
+  // ════════════ 반자동 탭 ════════════
+  function renderSemi() {
+    renderSemiGrid();
+    renderSemiReco();
+    renderSemiPreview();
+  }
+
+  function renderSemiGrid() {
+    const grid = document.getElementById('numberGridSemi');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 45; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'num-btn';
+      btn.textContent = i;
+      if (semi.excluded.has(i))       btn.classList.add('excluded');
+      else if (semi.fromReco.has(i))  btn.classList.add('from-reco');
+      else if (semi.selected.has(i))  btn.classList.add('selected');
+      btn.addEventListener('click', () => semiToggleSelect(i));
+      btn.addEventListener('contextmenu', e => { e.preventDefault(); semiToggleExclude(i); });
+      grid.appendChild(btn);
+    }
+  }
+
+  function renderSemiReco() {
+    const row = document.getElementById('recoRowSemi');
+    row.innerHTML = '';
+    RECOMMENDED.forEach(n => {
+      const chip = document.createElement('button');
+      chip.className = 'reco-chip';
+      chip.textContent = n;
+      if (semi.selected.has(n)) chip.classList.add('added');
+      chip.addEventListener('click', () => {
+        if (semi.selected.has(n)) return;
+        if (semi.excluded.has(n)) { showToast(`${n}번은 제외 번호입니다.`); return; }
+        if (semi.selected.size >= 6) { showToast('최대 6개까지 선택할 수 있습니다.'); return; }
+        semi.selected.add(n);
+        semi.fromReco.add(n);
+        renderSemi();
+      });
+      row.appendChild(chip);
+    });
+
+    const exclRow = document.getElementById('exclRowSemi');
+    exclRow.innerHTML = '';
+    if (semi.excluded.size === 0) {
+      exclRow.innerHTML = '<span style="font-size:.78rem;color:var(--muted)">🚫 제외 없음 (번호판 우클릭으로 추가)</span>';
+    } else {
+      [...semi.excluded].sort((a,b)=>a-b).forEach(n => {
+        const chip = document.createElement('span');
+        chip.className = 'excl-chip';
+        chip.title = '클릭하면 제외 해제';
+        chip.textContent = n;
+        chip.addEventListener('click', () => { semi.excluded.delete(n); renderSemi(); });
+        exclRow.appendChild(chip);
+      });
+    }
+  }
+
+  function renderSemiPreview() {
+    const container = document.getElementById('previewBallsSemi');
+    const countEl = document.getElementById('previewCountSemi');
+    container.innerHTML = '';
+    const nums = [...semi.selected].sort((a,b)=>a-b);
+    for (let i = 0; i < 6; i++) {
+      const ball = document.createElement('div');
+      ball.className = 'preview-ball';
+      if (i < nums.length) {
+        ball.textContent = nums[i];
+        ball.classList.add(semi.fromReco.has(nums[i]) ? 'purple' : 'blue');
+      } else {
+        ball.classList.add('empty');
+        ball.textContent = '●';
+      }
+      container.appendChild(ball);
+    }
+    countEl.textContent = `${semi.selected.size} / 6 고정됨`;
+  }
+
+  function semiToggleSelect(num) {
+    if (semi.excluded.has(num)) { showToast(`${num}번은 제외 번호입니다.`); return; }
+    if (semi.selected.has(num)) { semi.selected.delete(num); semi.fromReco.delete(num); }
+    else {
+      if (semi.selected.size >= 6) { showToast('최대 6개까지 선택할 수 있습니다.'); return; }
+      semi.selected.add(num);
+    }
+    renderSemi();
+  }
+
+  function semiToggleExclude(num) {
+    if (semi.selected.has(num)) { showToast(`${num}번은 고정 번호입니다. 먼저 해제하세요.`); return; }
+    if (semi.excluded.has(num)) { semi.excluded.delete(num); }
+    else {
+      const pool = getSemiPool().filter(n => n !== num);
+      if (pool.length + semi.selected.size < 6) { showToast('제외 시 추첨 가능 번호가 6개 미만이 됩니다.'); return; }
+      semi.excluded.add(num);
+    }
+    renderSemi();
+  }
+
+  function generateSemi() {
+    const pool = getSemiPool();
+    const need = 6 - semi.selected.size;
+    if (pool.length < need) { showToast('추첨 가능 번호가 부족합니다.'); return; }
+    const fixed = [...semi.selected];
+    const results = [];
+    const used = new Set();
+    let tries = 0;
+    while (results.length < gameCount && tries < gameCount * 100) {
+      tries++;
+      const rand = randomPick(pool, need);
+      const set = [...fixed, ...rand].sort((a,b)=>a-b);
+      const key = set.join(',');
+      if (!used.has(key)) { used.add(key); results.push(set); }
+    }
+    renderResults(results, n => {
+      if (semi.fromReco.has(n)) return 'rb-purple';
+      if (semi.selected.has(n)) return 'rb-blue';
+      return 'rb-gray';
+    });
+  }
+
+  // 추천 번호 생성 (반자동 탭)
+  document.getElementById('btnRecoGenSemi').addEventListener('click', () => {
+    const picked = shuffle(RECOMMENDED).slice(0, 6).sort((a,b)=>a-b);
+    // 고정으로 바로 추가
+    picked.forEach(n => {
+      if (semi.selected.size < 6 && !semi.excluded.has(n) && !semi.selected.has(n)) {
+        semi.selected.add(n);
+        semi.fromReco.add(n);
+      }
+    });
+    renderSemi();
+    showToast('추천 번호를 고정에 추가했어요.');
+  });
+
+  document.getElementById('btnSemiGen').addEventListener('click', generateSemi);
+  document.getElementById('btnSemiClear').addEventListener('click', () => {
+    semi.selected.clear(); semi.excluded.clear(); semi.fromReco.clear();
+    document.getElementById('resultSection').innerHTML = '';
+    renderSemi();
+  });
+
+  // ════════════ 수동 탭 ════════════
+  function renderManual() {
+    renderManualGrid();
+    renderManualPreview();
+  }
+
+  function renderManualGrid() {
+    const grid = document.getElementById('numberGridManual');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 45; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'num-btn';
+      btn.textContent = i;
+      if (manual.selected.has(i)) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        if (manual.selected.has(i)) { manual.selected.delete(i); }
+        else {
+          if (manual.selected.size >= 6) { showToast('최대 6개까지 선택할 수 있습니다.'); return; }
+          manual.selected.add(i);
+        }
+        renderManual();
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  function renderManualPreview() {
+    const container = document.getElementById('previewBallsManual');
+    const countEl = document.getElementById('previewCountManual');
+    container.innerHTML = '';
+    const nums = [...manual.selected].sort((a,b)=>a-b);
+    for (let i = 0; i < 6; i++) {
+      const ball = document.createElement('div');
+      ball.className = 'preview-ball';
+      if (i < nums.length) { ball.textContent = nums[i]; ball.classList.add('blue'); }
+      else { ball.classList.add('empty'); ball.textContent = '●'; }
+      container.appendChild(ball);
+    }
+    countEl.textContent = `${manual.selected.size} / 6 선택됨`;
+  }
+
+  document.getElementById('btnManualSave').addEventListener('click', () => {
+    if (manual.selected.size !== 6) { showToast('번호를 정확히 6개 선택해주세요.'); return; }
+    const nums = [...manual.selected].sort((a,b)=>a-b);
+    renderResults([nums], () => 'rb-blue');
+    showToast('번호를 저장했습니다!');
+  });
+
+  document.getElementById('btnManualClear').addEventListener('click', () => {
+    manual.selected.clear();
+    document.getElementById('resultSection').innerHTML = '';
+    renderManual();
+  });
+
+  // ────────────── 초기 렌더 ──────────────
+  renderSemi();
+  renderManual();
+</script>
+</body>
+</html>
