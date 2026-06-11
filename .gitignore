@@ -1,3 +1,16 @@
+# 클로드 관련파일
+.claude/
+
+# 빌드관련 파일
+bin/
+build/
+target/
+
+# 설정관련파일
+.project
+.classpath
+.settings
+
 # Logs
 logs
 *.log
