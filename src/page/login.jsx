@@ -1,13 +1,26 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { login } from '../api/userApi'
+import useAuthStore from '../store/authStore'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const setAuth = useAuthStore((state) => state.setAuth)
+  const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleLogin() {
-    navigate('/')
+  async function handleLogin() {
+    try {
+      const data = await login(userId, password)
+      setAuth(data)
+      navigate('/')
+    } catch {
+      alert('아이디 또는 비밀번호가 올바르지 않습니다.')
+    }
+  }
+
+  function handleJoin() {
+    navigate('/join')
   }
 
   return (
@@ -79,16 +92,16 @@ export default function Login() {
 
           {/* Form */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Email Field */}
+            {/* UserId Field */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <span style={{ fontSize: '13px', fontWeight: '500', color: '#1A1A1A', fontFamily: 'Inter, sans-serif' }}>
-                이메일
+                아이디
               </span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder="아이디를 입력하세요"
                 style={{
                   height: '44px',
                   borderRadius: '8px',
@@ -169,7 +182,8 @@ export default function Login() {
             <span style={{ fontSize: '13px', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>
               계정이 없으신가요?
             </span>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#2563EB', fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#2563EB', fontFamily: 'Inter, sans-serif', cursor: 'pointer' }}
+              onClick={handleJoin}>
               회원가입
             </span>
           </div>
